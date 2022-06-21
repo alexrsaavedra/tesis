@@ -8,13 +8,13 @@ public class Player : MonoBehaviour
 {
     public List<GameObject> hand;
 
-    public bool isMyTurn = false;
+    public bool isMyTurn;
 
     public GameManager gManager;
 
     public Transform handPosition;
 
-    public AlgoritmoMTCS mc;
+    public AlgoritmoMcts mc;
 
     // public Player()
     // {
@@ -63,14 +63,14 @@ public class Player : MonoBehaviour
     public async void PlayAutomatic()
     {
         await Task.Delay(0500);
-        mc = new AlgoritmoMTCS();
+        mc = new AlgoritmoMcts();
         List<Ficha> mano = new List<Ficha>();
         foreach (GameObject o in hand)
         {
             mano.Add(o.GetComponent<Ficha>());
         }
         
-        var move = mc.MCTS(mano, gManager).GetComponent<GameObject>();
+        var move = mc.Mcts(mano, gManager).GetComponent<GameObject>();
         /*GameObject ficha = new GameObject();
         ficha.GetComponent<Ficha>().leftValue = move.leftValue;
         ficha.GetComponent<Ficha>().rightValue = move.rightValue;*/

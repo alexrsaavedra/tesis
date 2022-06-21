@@ -298,7 +298,6 @@ public class GameManager : MonoBehaviour
 
     public bool HasLegalMovements(Player p)
     {
-        List<Ficha> test;
         foreach (var item in p.hand)
         {
             if (item.GetComponent<Ficha>().leftValue == leftSideValue ||

@@ -5,7 +5,7 @@ using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class NodoMCTS : MonoBehaviour
+public class NodoMCTS
 {
     public List<NodoMCTS> children;
     public List<Ficha> hand;

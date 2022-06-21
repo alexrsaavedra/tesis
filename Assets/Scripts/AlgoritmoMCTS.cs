@@ -7,7 +7,7 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 
-public class AlgoritmoMTCS
+public class AlgoritmoMcts
 {
     //public GameManager gameManager;
     /*public GameObject playerIA;*/
@@ -23,15 +23,14 @@ public class AlgoritmoMTCS
     }
 
 
-    public Ficha MCTS(List<Ficha> hand, GameManager gameManager)
+    public Ficha Mcts(List<Ficha> hand, GameManager gameManager)
     {
-        NodoMCTS root = new NodoMCTS();
-
-        root.fieldTokens = gameManager.GetFichasMCTS();
-
-        root.leftSideValue = gameManager.leftSideValue;
-
-        root.rightSideValue = gameManager.rightSideValue;
+        NodoMCTS root = new NodoMCTS
+        {
+            fieldTokens = gameManager.GetFichasMCTS(),
+            leftSideValue = gameManager.leftSideValue,
+            rightSideValue = gameManager.rightSideValue
+        };
 
         if (root.hand == null)
         {
@@ -44,11 +43,13 @@ public class AlgoritmoMTCS
 
         foreach (var play in list) // Añado cada una de las jugadas posibles al árbol, como hijos de la raíz
         {
-            NodoMCTS son = new NodoMCTS();
-            son.selectedToken = play;
-            son.wins = 0;
-            son.timesVisited = 0;
-            son.parent = root;
+            NodoMCTS son = new NodoMCTS
+            {
+                selectedToken = play,
+                wins = 0,
+                timesVisited = 0,
+                parent = root
+            };
             if (root.children == null)
             {
                 root.children = new List<NodoMCTS>();
@@ -57,7 +58,7 @@ public class AlgoritmoMTCS
             root.children.Add(son);
         }
 
-        Debug.Log(root);
+        Debug.Log(JsonUtility.ToJson(root));
         for (int i = 0; i < 100; i++)
         {
             NodoMCTS current = Selection(root); //este current ya es la jugada posible con mejor UCT seleccionada
@@ -117,50 +118,54 @@ public class AlgoritmoMTCS
 
     public NodoMCTS Expansion(NodoMCTS nodoMcts)
     {
-        Debug.Log(nodoMcts);
-        NodoMCTS newNode = new NodoMCTS();
-        newNode.parent = nodoMcts;
-        newNode.fieldTokens = nodoMcts.fieldTokens;
+        Debug.Log(JsonUtility.ToJson(nodoMcts));
+        NodoMCTS newNode = new NodoMCTS
+        {
+            parent = nodoMcts,
+            fieldTokens = nodoMcts.fieldTokens
+        };
         Debug.Log(nodoMcts);
         //si coloco la ficha a la izquierda y por la izquierda de la ficha
-        if (nodoMcts.leftSideValue == nodoMcts.selectedToken.GetComponent<Ficha>().leftValue)
+        Debug.Log(nodoMcts.leftSideValue);
+        Debug.Log(nodoMcts.selectedToken.leftValue);
+        if (nodoMcts.leftSideValue == nodoMcts.selectedToken.leftValue)
         {
             var newList = new List<Ficha>();
             newList.Add(nodoMcts.selectedToken);
             newList.AddRange(newNode.fieldTokens);
             newNode.fieldTokens = newList;
-            newNode.leftSideValue = nodoMcts.selectedToken.GetComponent<Ficha>().rightValue;
+            newNode.leftSideValue = nodoMcts.selectedToken.rightValue;
             newNode.rightSideValue =
-                newNode.fieldTokens[newNode.fieldTokens.Count - 1].GetComponent<Ficha>().rightValue;
+                newNode.fieldTokens[newNode.fieldTokens.Count - 1].rightValue;
         }
         //si coloco la ficha a la izquierda y por la derecha de la ficha
-        else if (nodoMcts.leftSideValue == nodoMcts.selectedToken.GetComponent<Ficha>().rightValue)
+        else if (nodoMcts.leftSideValue == nodoMcts.selectedToken.rightValue)
         {
             var newList = new List<Ficha>();
             newList.Add(nodoMcts.selectedToken);
             newList.AddRange(newNode.fieldTokens);
             newNode.fieldTokens = newList;
-            newNode.leftSideValue = nodoMcts.selectedToken.GetComponent<Ficha>().leftValue;
+            newNode.leftSideValue = nodoMcts.selectedToken.leftValue;
             newNode.rightSideValue =
-                newNode.fieldTokens[newNode.fieldTokens.Count - 1].GetComponent<Ficha>().rightValue;
+                newNode.fieldTokens[newNode.fieldTokens.Count - 1].rightValue;
             //newNode.rightSideValue = nodoMcts.rightSideValue;
         }
         //si coloco la ficha a la derecha y x la izquierda de la ficha
-        else if (nodoMcts.rightSideValue == nodoMcts.selectedToken.GetComponent<Ficha>().leftValue)
+        else if (nodoMcts.rightSideValue == nodoMcts.selectedToken.leftValue)
         {
             newNode.fieldTokens.Add(nodoMcts.selectedToken);
-            newNode.leftSideValue = nodoMcts.fieldTokens[0].GetComponent<Ficha>().leftValue; // o de la siguiente forma
+            newNode.leftSideValue = nodoMcts.fieldTokens[0].leftValue; // o de la siguiente forma
             //newNode.leftSideValue = nodoMcts.leftSideValue;
             newNode.rightSideValue =
-                newNode.fieldTokens[newNode.fieldTokens.Count - 1].GetComponent<Ficha>().rightValue;
+                newNode.fieldTokens[newNode.fieldTokens.Count - 1].rightValue;
         }
         //si coloco la ficha a la derecha y por la derecha de la ficha
-        else if (nodoMcts.rightSideValue == nodoMcts.selectedToken.GetComponent<Ficha>().rightValue)
+        else if (nodoMcts.rightSideValue == nodoMcts.selectedToken.rightValue)
         {
             newNode.fieldTokens.Add(nodoMcts.selectedToken);
-            newNode.leftSideValue = nodoMcts.fieldTokens[0].GetComponent<Ficha>().leftValue; // o de la siguiente forma
+            newNode.leftSideValue = nodoMcts.fieldTokens[0].leftValue; // o de la siguiente forma
             //newNode.leftSideValue = nodoMcts.leftSideValue;
-            newNode.rightSideValue = newNode.fieldTokens[newNode.fieldTokens.Count - 1].GetComponent<Ficha>().leftValue;
+            newNode.rightSideValue = newNode.fieldTokens[newNode.fieldTokens.Count - 1].leftValue;
         }
 
         /*newNode.fieldTokens.Add(nodoMcts.selectedToken);
@@ -198,7 +203,7 @@ public class AlgoritmoMTCS
     {
         Debug.Log(JsonUtility.ToJson(nodoPrometedor));
         int fichasOponente = 20 - (nodoPrometedor.hand.Count + nodoPrometedor.fieldTokens.Count);
-        
+
         List<Ficha> tokenDisponibles = gameManager.GetFichasDisponibles();
 
         List<Ficha> tokensIA = nodoPrometedor.hand;
