@@ -330,4 +330,15 @@ public class GameManager : MonoBehaviour
 
         return ft;
     }
+
+    public List<Ficha> GetFichasDisponibles()
+    {
+        List<Ficha> fichas = new List<Ficha>();
+        foreach (GameObject o in salvaToken)
+        {
+            fichas.Add(o.GetComponent<Ficha>());
+        }
+
+        return fichas;
+    }
 }
