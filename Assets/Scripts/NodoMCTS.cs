@@ -13,11 +13,12 @@ public class NodoMCTS
     public int leftSideValue;
     public int rightSideValue;
     public Ficha selectedToken;
+    public Ficha backUpSelectedToken;
     public int timesVisited;
     public NodoMCTS parent;
     public Player oponente;
     public int wins;
-    public bool expanded = false;
+    public bool visited = false;
 
     /*public double GetResult()  
     {

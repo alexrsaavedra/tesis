@@ -26,7 +26,7 @@ public class GameManager : MonoBehaviour
 
     public List<GameObject> tokenDeck;
     //creo un nuevo objeto tipo lista de gameobject para guardar los token que quedan despues de repartir
-    public List<GameObject> salvaToken;
+    public List<Ficha> salvaToken;
 
     public float padding;
 
@@ -102,8 +102,14 @@ public class GameManager : MonoBehaviour
             var token = tokenDeck[index];
             tokenDeck.Remove(token);
             player1.GetComponent<Player>().ReceiveToken(token);
-            salvaToken.Add(token);
-
+            
+            //En este paso añado a una lista las fichas q no son de la IA, con las cuales ella va a simular partidas aleatorias
+            Ficha ficha = new Ficha();
+            ficha.leftValue = token.GetComponent<Ficha>().leftValue;
+            ficha.rightValue = token.GetComponent<Ficha>().rightValue;
+            salvaToken.Add(ficha);
+            Debug.Log(JsonUtility.ToJson(ficha));
+            
             index = new Random().Next(0,tokenDeck.Count -1);
             token = tokenDeck[index];
             player2.GetComponent<Player>().ReceiveToken(token);
@@ -111,7 +117,15 @@ public class GameManager : MonoBehaviour
             
             yield return new WaitForSeconds(0.2f);
         }
-        salvaToken.AddRange(tokenDeck);
+        //Aquí añado el resto de las fichas que quedan fuera de juego, OJO -- la Ia no sabe cuales son las fichas del player humano
+        foreach (GameObject o in tokenDeck)
+        {
+            Ficha ficha = new Ficha()/*o.GetComponent<Ficha>()*/;
+            ficha.leftValue = o.GetComponent<Ficha>().leftValue;
+            ficha.rightValue = o.GetComponent<Ficha>().rightValue;
+            salvaToken.Add(ficha);
+        }
+       
         if (tokenDeck.Count > 0)
         {
             foreach (var item in tokenDeck)
@@ -162,7 +176,7 @@ public class GameManager : MonoBehaviour
         if (rightSideValue == token.GetComponent<Ficha>().leftValue)
         {
             fieldTokens.Add(token);
-            salvaToken.Remove(token);
+            /*salvaToken.Remove(token.GetComponent<Ficha>());*/
             if (token.GetComponent<Ficha>().leftValue == token.GetComponent<Ficha>().rightValue ) {
                 token.GetComponent<Transform>().position = new Vector3(actualRightToken.transform.position.x + distance -0.5f,
                 actualRightToken.transform.position.y, actualRightToken.transform.position.z );
@@ -182,7 +196,7 @@ public class GameManager : MonoBehaviour
         if (rightSideValue == token.GetComponent<Ficha>().rightValue)
         {
             fieldTokens.Add(token);
-            salvaToken.Remove(token);
+            /*salvaToken.Remove(token.GetComponent<Ficha>());*/
             token.GetComponent<Transform>().position = new Vector3(actualRightToken.transform.position.x + distance,
                 actualRightToken.transform.position.y, actualRightToken.transform.position.z);
             
@@ -205,7 +219,7 @@ public class GameManager : MonoBehaviour
             newList.Add(token);
             newList.AddRange(fieldTokens);
             fieldTokens = newList;
-            salvaToken.Remove(token);
+            /*salvaToken.Remove(token.GetComponent<Ficha>());*/
             
             if (token.GetComponent<Ficha>().leftValue == token.GetComponent<Ficha>().rightValue ) {
                 token.GetComponent<Transform>().position = new Vector3(actualLeftToken.transform.position.x - distance+0.5f,
@@ -227,7 +241,7 @@ public class GameManager : MonoBehaviour
             newList.Add(token);
             newList.AddRange(fieldTokens);
             fieldTokens = newList;
-            salvaToken.Remove(token);
+            /*salvaToken.Remove(token.GetComponent<Ficha>());*/
             
             token.GetComponent<Transform>().position = new Vector3(actualLeftToken.transform.position.x - distance,
                 actualLeftToken.transform.position.y, actualLeftToken.transform.position.z);
@@ -330,14 +344,14 @@ public class GameManager : MonoBehaviour
         return ft;
     }
 
-    public List<Ficha> GetFichasDisponibles()
+    /*public List<Ficha> GetFichasDisponibles()
     {
         List<Ficha> fichas = new List<Ficha>();
-        foreach (GameObject o in salvaToken)
+        foreach (var o in salvaToken)
         {
             fichas.Add(o.GetComponent<Ficha>());
         }
 
         return fichas;
-    }
+    }*/
 }

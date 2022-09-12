@@ -70,14 +70,24 @@ public class Player : MonoBehaviour
             mano.Add(o.GetComponent<Ficha>());
         }
         
-        var move = mc.Mcts(mano, gManager).GetComponent<GameObject>();
+        Ficha move = mc.Mcts(mano, gManager);
+        Debug.Log(JsonUtility.ToJson(move));
+        GameObject aux = new GameObject();
+        foreach (GameObject ficha in hand)
+        {
+            if (ficha.GetComponent<Ficha>().leftValue == move.leftValue && ficha.GetComponent<Ficha>().rightValue == move.rightValue)
+            {
+                aux = ficha;
+            }
+        }
+        
         /*GameObject ficha = new GameObject();
         ficha.GetComponent<Ficha>().leftValue = move.leftValue;
         ficha.GetComponent<Ficha>().rightValue = move.rightValue;*/
-        if (gManager.PlaceToken(move))
+        if (gManager.PlaceToken(aux))
         {
             move.GetComponent<Ficha>().owner = null;
-            hand.Remove(move);
+            hand.Remove(aux);
             if (hand.Count == 0) gManager.Win(tag);
             else gManager.EndTurn(this.gameObject);
         }
