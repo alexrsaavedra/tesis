@@ -9,9 +9,6 @@ using Random = UnityEngine.Random;
 
 public class AlgoritmoMcts
 {
-    //public GameManager gameManager;
-    /*public GameObject playerIA;*/
-
     // Start is called before the first frame update
     void Start()
     {
@@ -21,15 +18,14 @@ public class AlgoritmoMcts
     void Update()
     {
     }
-
-
-    public Ficha Mcts(List<Ficha> hand, GameManager gameManager)
+    
+    public Ficha Mcts(GameManager gameManager)
     {
         NodoMCTS root = new NodoMCTS
         {
             fieldTokens = gameManager.GetFichasMCTS(),
             leftSideValue = gameManager.leftSideValue,
-            rightSideValue = gameManager.rightSideValue
+            rightSideValue = gameManager.rightSideValue,
         };
 
         root.timesVisited = 1;
@@ -38,11 +34,15 @@ public class AlgoritmoMcts
             root.hand = new List<Ficha>();
         }
 
-        root.hand.AddRange(hand);
+        foreach (var gameObject in gameManager.player2.GetComponent<Player>().hand)
+        {
+            root.hand.Add(gameObject.GetComponent<Ficha>());
+        }
+        
 
         var list = jugadasLegales(root, root.hand);
 
-        foreach (var play in list) //Añado cada una de las jugadas posibles al árbol, como hijos de la raíz
+        foreach (Ficha play in list) //Añado cada una de las jugadas posibles al árbol, como hijos de la raíz
         {
             NodoMCTS son = new NodoMCTS
             {
@@ -52,7 +52,9 @@ public class AlgoritmoMcts
                 parent = root,
                 fieldTokens = root.fieldTokens,
                 hand = root.hand,
-                backUpSelectedToken = play
+                backUpSelectedToken = play,
+                leftSideValue = root.leftSideValue,
+                rightSideValue = root.rightSideValue
             };
             if (root.children == null)
             {
@@ -62,17 +64,23 @@ public class AlgoritmoMcts
             root.children.Add(son);
         }
 
+        if (root.children.Count ==0)  //si no hay hijo , no hay jugadas para hacer
+        {
+            return null;
+        }
+
         Debug.Log(JsonUtility.ToJson(root));
         for (int i = 0; i < 2; i++)
         {
             NodoMCTS current = Selection(root); //este current ya es la jugada posible con mejor UCT seleccionada
             Debug.Log(current.selectedToken.leftValue);
-            Debug.Log(current.selectedToken.rightValue);
-            
-            NodoMCTS prometedor = Expansion(current);
+            //Debug.Log(current.selectedToken.rightValue);
+
+            //NodoMCTS prometedor = Expansion(current);
+            PlaceTokenAux(current, current.selectedToken);
 
             //      Simulación y Retropropagación
-            current.wins += Simulacion(prometedor, gameManager);
+            current.wins += Simulacion(current, gameManager);
             current.timesVisited++;
             current.parent.timesVisited++;
             //current = current.parent;             Preguntar esto a rafael, lo hacen en otros ejemplos de codigo
@@ -90,7 +98,7 @@ public class AlgoritmoMcts
         }
 
         return move; // Se toma como mejor jugada la de mayor robustez, o sea, la más visitada.
-                                                       //return Selection(root).selectedToken;
+        //return Selection(root).selectedToken;
     }
 
 
@@ -99,18 +107,16 @@ public class AlgoritmoMcts
         NodoMCTS resultado = new NodoMCTS();
         double valorUCT = 0;
 
-        foreach (var item in nodo.children)
+        foreach (NodoMCTS item in nodo.children)
         {
-            Debug.Log(item.selectedToken.leftValue);
-            Debug.Log(item.selectedToken.rightValue);
-            double tasaExito = item.timesVisited > 0 ? item.wins / item.timesVisited : 0;   //Segun video del profesor esta tasa de exito es el resultado de la simulacion, en este caso solo wins q almacena tanto exitos como lose
+            double tasaExito = item.timesVisited > 0 ? item.wins / item.timesVisited : 0; //Segun video del profesor esta tasa de exito es el resultado de la simulacion, en este caso solo wins q almacena tanto exitos como lose
             double exploración = item.timesVisited > 0 ? Math.Sqrt(Math.Log(item.parent.timesVisited) / item.timesVisited) : 0;
             double valorAux = tasaExito + exploración;
             if (valorAux >= valorUCT)
             {
                 valorUCT = valorAux;
                 resultado = item;
-            }
+             }
         }
 
         if (resultado == null)
@@ -130,7 +136,7 @@ public class AlgoritmoMcts
     {
         Debug.Log("Este es el nodo resultante de la selección");
         Debug.Log(JsonUtility.ToJson(nodoMcts));
-        
+
         //si coloco la ficha a la izquierda y por la izquierda de la ficha
 
         if (nodoMcts.fieldTokens[0].leftValue == nodoMcts.selectedToken.leftValue)
@@ -208,35 +214,35 @@ public class AlgoritmoMcts
 
     public int Simulacion(NodoMCTS nodoPrometedor, GameManager gameManager)
     {
-        Debug.Log("Este es el nodo que viene de la exapansión");
-        Debug.Log(JsonUtility.ToJson(nodoPrometedor));
-        int fichasOponente = 20 - (nodoPrometedor.hand.Count + nodoPrometedor.fieldTokens.Count);
-        Debug.Log("Cantidad de fichas que tiene el oponente");
-        Debug.Log(fichasOponente);
-        Debug.Log("Cantidad de fichas que tiene la IA");
-        Debug.Log(nodoPrometedor.hand.Count);
-        Debug.Log("Cant de fichas que hay en el campo");
-        Debug.Log(nodoPrometedor.fieldTokens.Count);
+        NodoMCTS simulationNode = new NodoMCTS();
+        simulationNode.fieldTokens = nodoPrometedor.fieldTokens;
+        simulationNode.hand = nodoPrometedor.hand;
+        simulationNode.leftSideValue = nodoPrometedor.leftSideValue;
+        simulationNode.rightSideValue = nodoPrometedor.rightSideValue;
+        
+        int fichasOponente = gameManager.player1.GetComponent<Player>().hand.Count;
+        //int fichasoposite = 20 - (nodoPrometedor.hand.Count + nodoPrometedor.fieldTokens.Count);
         
         List<Ficha> tokenDisponibles = new List<Ficha>();
         foreach (var ficha in gameManager.salvaToken)
         {
             tokenDisponibles.Add(ficha);
-            Debug.Log(JsonUtility.ToJson(ficha));
         }
-        
 
-        List<Ficha> tokensIA = nodoPrometedor.hand;
+        //int fichasIA = nodoPrometedor.hand.Count;
+        int fichasIA = simulationNode.hand.Count;
+        //List<Ficha> tokensIA = nodoPrometedor.hand;
+        List<Ficha> tokensIA = simulationNode.hand;
 
-        while (fichasOponente > 0 && tokensIA.Count > 0)
+        while (fichasOponente > 0 && fichasIA > 0)
         {
-            List<Ficha> legalPlays = jugadasLegales(nodoPrometedor, tokenDisponibles);
+            List<Ficha> legalPlays = jugadasLegalesTest(nodoPrometedor, tokenDisponibles);
             if (legalPlays.Any())
             {
                 var index = Random.Range(0, legalPlays.Count - 1);
-                nodoPrometedor.selectedToken = legalPlays[index];
-                tokenDisponibles.Remove(legalPlays[index]);
-                PlaceTokenAux(nodoPrometedor, nodoPrometedor.selectedToken);
+                simulationNode.selectedToken = legalPlays[index];
+                //tokenDisponibles.Remove(legalPlays[index]);
+                PlaceTokenAux(simulationNode, simulationNode.selectedToken);
                 fichasOponente--;
                 if (fichasOponente == 0)
                 {
@@ -244,14 +250,18 @@ public class AlgoritmoMcts
                 }
             }
 
-            List<Ficha> legalPlaysIA = jugadasLegales(nodoPrometedor, tokensIA);
+            List<Ficha> legalPlaysIA = jugadasLegalesTest(simulationNode, tokensIA);
+            
             if (legalPlaysIA.Any())
             {
-                var index = Random.Range(0, legalPlaysIA.Count - 1);
-                nodoPrometedor.selectedToken = legalPlaysIA[index];
-                tokensIA.Remove(legalPlaysIA[index]);
-                PlaceTokenAux(nodoPrometedor, legalPlaysIA[index]);
-                if (tokensIA.Count == 0)
+                //var index = Random.Range(0, legalPlaysIA.Count - 1);
+                var index = estrategiaDobleMayor(legalPlaysIA);
+                simulationNode.selectedToken = legalPlaysIA[index];
+                //tokensIA.Remove(legalPlaysIA[index]);
+                PlaceTokenAux(simulationNode, legalPlaysIA[index]);
+                fichasIA--;
+                //if (tokensIA.Count == 0)
+                if (fichasIA == 0)
                 {
                     return 1; // gana la IA
                 }
@@ -259,17 +269,34 @@ public class AlgoritmoMcts
 
             if (!legalPlays.Any() && !legalPlaysIA.Any())
             {
-                if (tokensIA.Count < fichasOponente)
+                int sumH = 0;
+                int sumIa = 0;
+                foreach (var ficha in gameManager.player1.GetComponent<Player>().hand)
                 {
-                    return 1;
+                    foreach (var card in simulationNode.fieldTokens)
+                    {
+                        if (ficha.GetComponent<Ficha>().leftValue != card.leftValue && ficha.GetComponent<Ficha>().rightValue!=card.rightValue)
+                        {
+                            sumH += ficha.GetComponent<Ficha>().leftValue + ficha.GetComponent<Ficha>().rightValue;
+                        }
+                    }
+                }
+                foreach (var ficha2 in gameManager.player2.GetComponent<Player>().hand)
+                {
+                    foreach (var card2 in simulationNode.fieldTokens)
+                    {
+                        if (ficha2.GetComponent<Ficha>().leftValue != card2.leftValue && ficha2.GetComponent<Ficha>().rightValue!=card2.rightValue)
+                        {
+                            sumIa += ficha2.GetComponent<Ficha>().leftValue + ficha2.GetComponent<Ficha>().rightValue;
+                        }
+                    }
                 }
 
-                if (tokensIA.Count > fichasOponente)
+                if (sumH == sumIa)
                 {
-                    return -1;
+                    return 0;
                 }
-
-                return 0;
+                return sumIa < sumH ? 1 : -1;
             }
         }
 
@@ -321,6 +348,7 @@ public class AlgoritmoMcts
             var newList = new List<Ficha>();
             newList.Add(token);
             newList.AddRange(nodo.fieldTokens);
+            nodo.fieldTokens = newList;
             nodo.leftSideValue = token.leftValue;
             nodo.rightSideValue = nodo.fieldTokens[nodo.fieldTokens.Count - 1].rightValue;
             //newNode.rightSideValue = nodoMcts.rightSideValue;
@@ -341,5 +369,60 @@ public class AlgoritmoMcts
             //newNode.leftSideValue = nodoMcts.leftSideValue;
             nodo.rightSideValue = token.leftValue;
         }
+    }
+
+    public int estrategiaDobleMayor(List<Ficha> fichas)
+    {
+        int indexAux=0;
+        int indexDoble = -1;
+        int mayorAux = 0;
+        int mayorDoble = 0;
+        for (var i = 0; i < fichas.Count; i++)
+        {
+            if (fichas[i].leftValue == fichas[i].rightValue)
+            {
+                if (fichas[i].leftValue + fichas[i].rightValue > mayorDoble)
+                {
+                    mayorDoble = fichas[i].leftValue + fichas[i].rightValue;
+                    indexDoble = i;
+                }
+            }
+            if (fichas[i].leftValue + fichas[i].rightValue > mayorAux)
+            {
+                mayorAux = fichas[i].leftValue + fichas[i].rightValue;
+                indexAux = i;
+            }
+        }
+
+
+        
+        return indexDoble != -1 ? indexDoble : indexAux;
+    }
+    public List<Ficha> jugadasLegalesTest(NodoMCTS nodo, List<Ficha> tokenDisponibles)
+    {
+        List<Ficha> jugadasLegales1 = new List<Ficha>();
+
+        foreach (Ficha fichaDisponible in tokenDisponibles)
+        {
+            foreach (Ficha fichaMesa in nodo.fieldTokens)
+            {
+                if (fichaDisponible.leftValue != fichaMesa.leftValue && fichaDisponible.rightValue != fichaMesa.rightValue)
+                {
+                    if (fichaDisponible.leftValue == nodo.leftSideValue ||
+                        fichaDisponible.leftValue == nodo.rightSideValue)
+                    {
+                        jugadasLegales1.Add(fichaDisponible);
+                    }
+
+                    else if (fichaDisponible.rightValue == nodo.leftSideValue ||
+                             fichaDisponible.rightValue == nodo.rightSideValue)
+                    {
+                        jugadasLegales1.Add(fichaDisponible);
+                    }
+                }
+            }
+        }
+
+        return jugadasLegales1;
     }
 }

@@ -67,11 +67,21 @@ public class Player : MonoBehaviour
         List<Ficha> mano = new List<Ficha>();
         foreach (GameObject o in hand)
         {
-            mano.Add(o.GetComponent<Ficha>());
+            if (o != null)
+            {
+                mano.Add(o.GetComponent<Ficha>());
+            }
+            
         }
+
         
-        Ficha move = mc.Mcts(mano, gManager);
+        
+        Ficha move = mc.Mcts(gManager);
         Debug.Log(JsonUtility.ToJson(move));
+        if (move == null)
+        {
+            gManager.EndTurn(this.gameObject);
+        }
         GameObject aux = new GameObject();
         foreach (GameObject ficha in hand)
         {
