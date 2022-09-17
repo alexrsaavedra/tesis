@@ -71,44 +71,43 @@ public class Player : MonoBehaviour
             {
                 mano.Add(o.GetComponent<Ficha>());
             }
-            
         }
-
-        
-        
         Ficha move = mc.Mcts(gManager);
-        Debug.Log(JsonUtility.ToJson(move));
+        
+        //GameObject move2 = MasAcompañada();
         if (move == null)
         {
             gManager.EndTurn(this.gameObject);
         }
-        GameObject aux = new GameObject();
-        foreach (GameObject ficha in hand)
+        else
         {
-            if (ficha.GetComponent<Ficha>().leftValue == move.leftValue && ficha.GetComponent<Ficha>().rightValue == move.rightValue)
+            GameObject aux = new GameObject();
+            foreach (GameObject ficha in hand)
             {
-                aux = ficha;
+                if (ficha.GetComponent<Ficha>().leftValue == move.leftValue && ficha.GetComponent<Ficha>().rightValue == move.rightValue)
+                {
+                    aux = ficha;
+                }
+            }
+            if (gManager.PlaceToken(aux))
+            {
+                aux.GetComponent<Ficha>().owner = null;
+                hand.Remove(aux);
+                if (hand.Count == 0) gManager.Win(tag);
+                else gManager.EndTurn(this.gameObject);
             }
         }
+        Debug.Log(JsonUtility.ToJson(move.GetComponent<Ficha>()));
         
-        /*GameObject ficha = new GameObject();
-        ficha.GetComponent<Ficha>().leftValue = move.leftValue;
-        ficha.GetComponent<Ficha>().rightValue = move.rightValue;*/
-        if (gManager.PlaceToken(aux))
-        {
-            move.GetComponent<Ficha>().owner = null;
-            hand.Remove(aux);
-            if (hand.Count == 0) gManager.Win(tag);
-            else gManager.EndTurn(this.gameObject);
-        }
     }
+
     /*public async void PlayAutomatic()
     {
         foreach (var token in hand)
         {
             await Task.Delay(0500);
-            var result = gManager.PlaceToken(token);
-            if (result == true)
+    
+            if (gManager.PlaceToken(token))
             {
                 token.GetComponent<Ficha>().owner = null;
                 hand.Remove(token);
@@ -118,4 +117,127 @@ public class Player : MonoBehaviour
             }
         }
     }*/
+    //*************** Test *****************//
+    public GameObject MasAcompañada()
+    {
+        int mas = 0;
+        int masAux = 0;
+        int fichAcomp = 0;
+        List<GameObject> jugadasLegales1 = new List<GameObject>();
+        foreach (var o in hand)
+        {
+            if (o.GetComponent<Ficha>().leftValue == gManager.leftSideValue ||
+                o.GetComponent<Ficha>().leftValue == gManager.rightSideValue)
+            {
+                jugadasLegales1.Add(o);
+            }
+
+            else if (o.GetComponent<Ficha>().rightValue == gManager.leftSideValue ||
+                     o.GetComponent<Ficha>().rightValue == gManager.rightSideValue)
+            {
+                jugadasLegales1.Add(o);
+            }
+        }
+
+        if (jugadasLegales1.Count == 0)
+        {
+            return null;
+        }
+        /*for (var i = 0; i < jugadasLegales1.Count; i++)
+        {
+            if (jugadasLegales1[i].GetComponent<Ficha>().leftValue == gManager.leftSideValue ||
+                jugadasLegales1[i].GetComponent<Ficha>().leftValue == gManager.rightSideValue)
+            {
+                foreach (var ficha1 in hand)
+                {
+                    if (ficha1.GetComponent<Ficha>().leftValue == jugadasLegales1[i].GetComponent<Ficha>().rightValue)
+                    {
+                        mas++;
+                    }
+
+                    if (ficha1.GetComponent<Ficha>().rightValue == jugadasLegales1[i].GetComponent<Ficha>().rightValue)
+                    {
+                        mas++;
+                    }
+
+                    if (mas > masAux)
+                    {
+                        fichAcomp = i;
+                        masAux = mas;
+                        mas = 0;
+                    }
+                    else
+                    {
+                        mas = 0;
+                    }
+                }
+            }
+
+            if (jugadasLegales1[i].GetComponent<Ficha>().rightValue == gManager.leftSideValue ||
+                jugadasLegales1[i].GetComponent<Ficha>().rightValue == gManager.rightSideValue)
+            {
+                foreach (var ficha1 in hand)
+                {
+                    if (ficha1.GetComponent<Ficha>().leftValue == jugadasLegales1[i].GetComponent<Ficha>().leftValue)
+                    {
+                        mas++;
+                    }
+
+                    if (ficha1.GetComponent<Ficha>().rightValue == jugadasLegales1[i].GetComponent<Ficha>().leftValue)
+                    {
+                        mas++;
+                    }
+
+                    if (mas > masAux)
+                    {
+                        fichAcomp = i;
+                        masAux = mas;
+                        mas = 0;
+                    }
+                    else
+                    {
+                        mas = 0;
+                    }
+                }
+            }
+        }*/
+
+        for (var i = 0; i < jugadasLegales1.Count; i++)
+        {
+            for (var j = 0; j < hand.Count; j++)
+            {
+                if (jugadasLegales1[i].GetComponent<Ficha>().rightValue == gManager.leftSideValue ||
+                    jugadasLegales1[i].GetComponent<Ficha>().rightValue == gManager.rightSideValue)
+                {
+                    if (jugadasLegales1[i].GetComponent<Ficha>().leftValue == hand[j].GetComponent<Ficha>().rightValue ||
+                        jugadasLegales1[i].GetComponent<Ficha>().leftValue == hand[j].GetComponent<Ficha>().leftValue)
+                    {
+                        mas++;
+                    }
+                }
+
+                if (jugadasLegales1[i].GetComponent<Ficha>().leftValue == gManager.leftSideValue ||
+                    jugadasLegales1[i].GetComponent<Ficha>().leftValue == gManager.rightSideValue)
+                {
+                    if (jugadasLegales1[i].GetComponent<Ficha>().rightValue == hand[j].GetComponent<Ficha>().rightValue ||
+                        jugadasLegales1[i].GetComponent<Ficha>().rightValue == hand[j].GetComponent<Ficha>().leftValue)
+                    {
+                        mas++;
+                    }
+                }
+            }
+            if (mas >= masAux)
+            {
+                masAux = mas;
+                fichAcomp = i;
+                mas = 0;
+            }
+            else
+            {
+                mas = 0;
+            }
+        }
+
+        return jugadasLegales1[fichAcomp];
+    }
 }

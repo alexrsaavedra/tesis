@@ -303,8 +303,6 @@ public class GameManager : MonoBehaviour
             {
                 MostrarCartel(tag);  
             }
-
-            
         }
             
         

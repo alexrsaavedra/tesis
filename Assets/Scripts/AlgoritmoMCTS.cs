@@ -18,7 +18,7 @@ public class AlgoritmoMcts
     void Update()
     {
     }
-    
+
     public Ficha Mcts(GameManager gameManager)
     {
         NodoMCTS root = new NodoMCTS
@@ -38,7 +38,7 @@ public class AlgoritmoMcts
         {
             root.hand.Add(gameObject.GetComponent<Ficha>());
         }
-        
+
 
         var list = jugadasLegales(root, root.hand);
 
@@ -64,9 +64,13 @@ public class AlgoritmoMcts
             root.children.Add(son);
         }
 
-        if (root.children.Count ==0)  //si no hay hijo , no hay jugadas para hacer
+        if (root.children.Count == 0) //si no hay hijo , no hay jugadas para hacer
         {
             return null;
+        }
+        else if (root.children.Count == 1)
+        {
+            return root.children[0].selectedToken;
         }
 
         Debug.Log(JsonUtility.ToJson(root));
@@ -109,14 +113,19 @@ public class AlgoritmoMcts
 
         foreach (NodoMCTS item in nodo.children)
         {
-            double tasaExito = item.timesVisited > 0 ? item.wins / item.timesVisited : 0; //Segun video del profesor esta tasa de exito es el resultado de la simulacion, en este caso solo wins q almacena tanto exitos como lose
-            double exploración = item.timesVisited > 0 ? Math.Sqrt(Math.Log(item.parent.timesVisited) / item.timesVisited) : 0;
+            double
+                tasaExito = item.timesVisited > 0
+                    ? item.wins / item.timesVisited
+                    : 0; //Segun video del profesor esta tasa de exito es el resultado de la simulacion, en este caso solo wins q almacena tanto exitos como lose
+            double exploración = item.timesVisited > 0
+                ? Math.Sqrt(Math.Log(item.parent.timesVisited) / item.timesVisited)
+                : 0;
             double valorAux = tasaExito + exploración;
             if (valorAux >= valorUCT)
             {
                 valorUCT = valorAux;
                 resultado = item;
-             }
+            }
         }
 
         if (resultado == null)
@@ -219,10 +228,10 @@ public class AlgoritmoMcts
         simulationNode.hand = nodoPrometedor.hand;
         simulationNode.leftSideValue = nodoPrometedor.leftSideValue;
         simulationNode.rightSideValue = nodoPrometedor.rightSideValue;
-        
+
         int fichasOponente = gameManager.player1.GetComponent<Player>().hand.Count;
         //int fichasoposite = 20 - (nodoPrometedor.hand.Count + nodoPrometedor.fieldTokens.Count);
-        
+
         List<Ficha> tokenDisponibles = new List<Ficha>();
         foreach (var ficha in gameManager.salvaToken)
         {
@@ -236,7 +245,7 @@ public class AlgoritmoMcts
 
         while (fichasOponente > 0 && fichasIA > 0)
         {
-            List<Ficha> legalPlays = jugadasLegalesTest(nodoPrometedor, tokenDisponibles);
+            List<Ficha> legalPlays = jugadasLegalesTest(simulationNode, tokenDisponibles);
             if (legalPlays.Any())
             {
                 var index = Random.Range(0, legalPlays.Count - 1);
@@ -251,13 +260,14 @@ public class AlgoritmoMcts
             }
 
             List<Ficha> legalPlaysIA = jugadasLegalesTest(simulationNode, tokensIA);
-            
+
             if (legalPlaysIA.Any())
             {
                 //var index = Random.Range(0, legalPlaysIA.Count - 1);
-                var index = estrategiaDobleMayor(legalPlaysIA);
+                var index = SelectorEstrategia(legalPlaysIA);
                 simulationNode.selectedToken = legalPlaysIA[index];
                 //tokensIA.Remove(legalPlaysIA[index]);
+
                 PlaceTokenAux(simulationNode, legalPlaysIA[index]);
                 fichasIA--;
                 //if (tokensIA.Count == 0)
@@ -275,17 +285,20 @@ public class AlgoritmoMcts
                 {
                     foreach (var card in simulationNode.fieldTokens)
                     {
-                        if (ficha.GetComponent<Ficha>().leftValue != card.leftValue && ficha.GetComponent<Ficha>().rightValue!=card.rightValue)
+                        if (ficha.GetComponent<Ficha>().leftValue != card.leftValue &&
+                            ficha.GetComponent<Ficha>().rightValue != card.rightValue)
                         {
                             sumH += ficha.GetComponent<Ficha>().leftValue + ficha.GetComponent<Ficha>().rightValue;
                         }
                     }
                 }
+
                 foreach (var ficha2 in gameManager.player2.GetComponent<Player>().hand)
                 {
                     foreach (var card2 in simulationNode.fieldTokens)
                     {
-                        if (ficha2.GetComponent<Ficha>().leftValue != card2.leftValue && ficha2.GetComponent<Ficha>().rightValue!=card2.rightValue)
+                        if (ficha2.GetComponent<Ficha>().leftValue != card2.leftValue &&
+                            ficha2.GetComponent<Ficha>().rightValue != card2.rightValue)
                         {
                             sumIa += ficha2.GetComponent<Ficha>().leftValue + ficha2.GetComponent<Ficha>().rightValue;
                         }
@@ -296,6 +309,7 @@ public class AlgoritmoMcts
                 {
                     return 0;
                 }
+
                 return sumIa < sumH ? 1 : -1;
             }
         }
@@ -370,12 +384,12 @@ public class AlgoritmoMcts
             nodo.rightSideValue = token.leftValue;
         }
     }
-
-    public int estrategiaDobleMayor(List<Ficha> fichas)
+        //todo implementar el selector de estrategia para la simulación
+    public int SelectorEstrategia(List<Ficha> fichas)   //aqui actualmente hago uso de tirar primero los dobles y luego de jugar la mayor, más abajo está jugar la más acompañada
     {
-        int indexAux=0;
-        int indexDoble = -1;
-        int mayorAux = 0;
+        int indexAux = 0;
+        int indexDoble = -1;    //indice del doble
+        int mayorAux = 0;   //indice de la mayor
         int mayorDoble = 0;
         for (var i = 0; i < fichas.Count; i++)
         {
@@ -387,6 +401,7 @@ public class AlgoritmoMcts
                     indexDoble = i;
                 }
             }
+
             if (fichas[i].leftValue + fichas[i].rightValue > mayorAux)
             {
                 mayorAux = fichas[i].leftValue + fichas[i].rightValue;
@@ -394,10 +409,52 @@ public class AlgoritmoMcts
             }
         }
 
-
-        
         return indexDoble != -1 ? indexDoble : indexAux;
     }
+
+    public Ficha MasAcompañada(List<Ficha> ficha, NodoMCTS simulationNode)
+    {
+        int mas = 0;
+        int masAux = 0;
+        int fichAcomp = 0;
+        for (var i = 0; i < ficha.Count; i++)
+        {
+            foreach (var mano in simulationNode.hand)
+            {
+                if (ficha[i].rightValue == simulationNode.leftSideValue || 
+                    ficha[i].rightValue == simulationNode.rightSideValue)
+                {
+                    if (ficha[i].leftValue == mano.leftValue || 
+                        ficha[i].leftValue == mano.rightValue)
+                    {
+                        mas++;
+                    }
+                }
+
+                if (ficha[i].leftValue == simulationNode.leftSideValue ||
+                    ficha[i].leftValue == simulationNode.rightSideValue)
+                {
+                    if (ficha[i].rightValue == mano.leftValue ||
+                        ficha[i].rightValue == mano.rightValue)
+                    {
+                        mas++;
+                    }
+                }
+            }
+            if (mas >= masAux)
+            {
+                masAux = mas;
+                fichAcomp = i;
+                mas = 0;
+            }
+            else
+            {
+                mas = 0;
+            }
+        }
+        return ficha[fichAcomp];
+    }
+
     public List<Ficha> jugadasLegalesTest(NodoMCTS nodo, List<Ficha> tokenDisponibles)
     {
         List<Ficha> jugadasLegales1 = new List<Ficha>();
@@ -406,7 +463,8 @@ public class AlgoritmoMcts
         {
             foreach (Ficha fichaMesa in nodo.fieldTokens)
             {
-                if (fichaDisponible.leftValue != fichaMesa.leftValue && fichaDisponible.rightValue != fichaMesa.rightValue)
+                if (fichaDisponible.leftValue != fichaMesa.leftValue &&
+                    fichaDisponible.rightValue != fichaMesa.rightValue)
                 {
                     if (fichaDisponible.leftValue == nodo.leftSideValue ||
                         fichaDisponible.leftValue == nodo.rightSideValue)
