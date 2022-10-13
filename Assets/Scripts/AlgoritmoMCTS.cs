@@ -28,7 +28,7 @@ public class AlgoritmoMcts
             rightSideValue = gameManager.rightSideValue,
         };
 
-        root.timesVisited = 1;
+        root.timesVisited = 0;
         if (root.hand == null)
         {
             root.hand = new List<Ficha>();
@@ -64,30 +64,51 @@ public class AlgoritmoMcts
             root.children.Add(son);
         }
 
-        if (root.children.Count == 0) //si no hay hijo , no hay jugadas para hacer
+        /*if (root.children.Count == 0)
         {
             return null;
-        }
-        else if (root.children.Count == 1)
+        }*/
+        if (root.children.Count == 1)
         {
             return root.children[0].selectedToken;
         }
 
         Debug.Log(JsonUtility.ToJson(root));
+        //Aqui el core de MCTS
         for (int i = 0; i < 2; i++)
         {
-            NodoMCTS current = Selection(root); //este current ya es la jugada posible con mejor UCT seleccionada
-            Debug.Log(current.selectedToken.leftValue);
-            //Debug.Log(current.selectedToken.rightValue);
-
-            //NodoMCTS prometedor = Expansion(current);
-            PlaceTokenAux(current, current.selectedToken);
-
-            //      Simulación y Retropropagación
-            current.wins += Simulacion(current, gameManager);
-            current.timesVisited++;
-            current.parent.timesVisited++;
-            //current = current.parent;             Preguntar esto a rafael, lo hacen en otros ejemplos de codigo
+            //Selection
+            NodoMCTS current = Selection(root);
+            
+            if (!current.visited)
+            {
+                PlaceTokenAux(current, current.selectedToken);
+                current.visited = true;
+                //Simulation & Backpropagation
+                current.wins += Simulacion(current, gameManager);
+                current.timesVisited++;
+                current.parent.timesVisited++;
+            }
+            //Expansion
+            else
+            {
+                if (current.timesExpanded<=3)
+                {
+                    NodoMCTS expanded = Expansion(current, gameManager);
+                    //Simulation
+                    int simValue = Simulacion(expanded, gameManager);
+                    current.timesExpanded++;
+                    Backpropagation(expanded, simValue);
+                }
+                else if (current.timesExpanded > 3)
+                {
+                    NodoMCTS expanded = current.getRandomChild(current);
+                    int simValue = Simulacion(expanded, gameManager);
+                    Backpropagation(expanded, simValue);
+                }
+                
+            }
+            
         }
 
         var visits = 0;
@@ -132,7 +153,7 @@ public class AlgoritmoMcts
         {
             if (nodo.children.Any())
             {
-                return nodo.getRandomChild();
+                return nodo.getRandomChild(nodo);
             }
 
             return nodo;
@@ -141,9 +162,72 @@ public class AlgoritmoMcts
         return resultado;
     }
 
-    public NodoMCTS Expansion(NodoMCTS nodoMcts)
+    public NodoMCTS Expansion(NodoMCTS nodoMcts, GameManager gameManager)
     {
-        Debug.Log("Este es el nodo resultante de la selección");
+        List<Ficha> tokenDisponibles = new List<Ficha>();
+        foreach (var ficha in gameManager.salvaToken)
+        {
+            tokenDisponibles.Add(ficha);
+        }
+
+        List<Ficha> jugadasLegalesHumano = jugadasLegalesTest(nodoMcts, tokenDisponibles);
+        if (jugadasLegalesHumano.Count == 1)
+        {
+            NodoMCTS expandedNode = new NodoMCTS();
+            expandedNode.parent = nodoMcts;
+            expandedNode.fieldTokens = nodoMcts.fieldTokens;
+            expandedNode.hand = nodoMcts.hand;
+            expandedNode.leftSideValue = nodoMcts.leftSideValue;
+            expandedNode.rightSideValue = nodoMcts.rightSideValue;
+            expandedNode.timesVisited = 0;
+            expandedNode.wins = 0;
+
+            PlaceTokenAux(expandedNode, jugadasLegalesHumano[0]);
+
+            List<Ficha> jugadasLegalesIa = jugadasLegalesTest(expandedNode, expandedNode.hand);
+            if (jugadasLegalesIa.Any())
+            {
+                int index = Random.Range(0, jugadasLegalesIa.Count - 1);
+                PlaceTokenAux(expandedNode, jugadasLegalesIa[index]);
+                expandedNode.selectedToken = jugadasLegalesIa[index];
+                return expandedNode;
+            }
+
+            return nodoMcts;
+        }
+
+        if (jugadasLegalesHumano.Count > 1)
+        {
+            NodoMCTS expandedNode2 = new NodoMCTS();
+            expandedNode2.parent = nodoMcts;
+            expandedNode2.fieldTokens = nodoMcts.fieldTokens;
+            expandedNode2.hand = nodoMcts.hand;
+            expandedNode2.leftSideValue = nodoMcts.leftSideValue;
+            expandedNode2.rightSideValue = nodoMcts.rightSideValue;
+            expandedNode2.timesVisited = 0;
+            expandedNode2.wins = 0;
+
+            int index = Random.Range(0, jugadasLegalesHumano.Count - 1);
+            PlaceTokenAux(expandedNode2, jugadasLegalesHumano[index]);
+
+            List<Ficha> jugadasLegalesIa =
+                jugadasLegalesTest(expandedNode2, expandedNode2.hand); //Lo q hago es, q si el humano tiene jugadas
+            if (jugadasLegalesIa.Any()) //disponibles pero la ia no, devuelvo el mismo
+            {
+                //nodo q m entra, pues no simulo desde un pase de la IA
+                int index2 = Random.Range(0, jugadasLegalesIa.Count - 1);
+                PlaceTokenAux(expandedNode2, jugadasLegalesIa[index2]);
+                expandedNode2.selectedToken = jugadasLegalesIa[index2];
+                return expandedNode2;
+            }
+
+            return nodoMcts;
+        }
+
+        return nodoMcts;
+
+
+        /*Debug.Log("Este es el nodo resultante de la selección");
         Debug.Log(JsonUtility.ToJson(nodoMcts));
 
         //si coloco la ficha a la izquierda y por la izquierda de la ficha
@@ -194,7 +278,7 @@ public class AlgoritmoMcts
 
         /*newNode.fieldTokens.Add(nodoMcts.selectedToken);
         newNode.leftSideValue = newNode.fieldTokens[0].GetComponent<Ficha>().leftValue;
-        newNode.rightSideValue = newNode.fieldTokens[newNode.fieldTokens.Count - 1].GetComponent<Ficha>().rightValue;*/
+        newNode.rightSideValue = newNode.fieldTokens[newNode.fieldTokens.Count - 1].GetComponent<Ficha>().rightValue;#1#
 /*List<GameObject> jugadasLegales = new List<GameObject>();
             
         foreach (var ficha in newNode.hand)
@@ -215,9 +299,8 @@ public class AlgoritmoMcts
             newNode.selectedToken = jugadasLegales[index];
         }
         else
-            newNode.selectedToken = null;*/
-
-        return nodoMcts;
+            newNode.selectedToken = null;#1#*/
+        
     }
 
 
@@ -246,6 +329,7 @@ public class AlgoritmoMcts
         while (fichasOponente > 0 && fichasIA > 0)
         {
             List<Ficha> legalPlays = jugadasLegalesTest(simulationNode, tokenDisponibles);
+            
             if (legalPlays.Any())
             {
                 var index = Random.Range(0, legalPlays.Count - 1);
@@ -317,8 +401,16 @@ public class AlgoritmoMcts
         return 0; //empate
     }
 
-    public void RetroPropagación()
+    public void Backpropagation(NodoMCTS nodoMcts, int simulacion)
     {
+        NodoMCTS tempNode = nodoMcts;
+        while (tempNode != null)
+        {
+            tempNode.visited = true;
+            tempNode.timesVisited++;
+            tempNode.wins += simulacion;
+            tempNode = tempNode.parent;
+        }
     }
 
 

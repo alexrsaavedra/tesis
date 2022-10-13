@@ -2,15 +2,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 using Random = System.Random;
 
 public class GameManager : MonoBehaviour
 {
     public GameObject tokenReference;
-    
-    public GameObject CartelReference;
 
     public GameObject player1;
 
@@ -32,16 +32,14 @@ public class GameManager : MonoBehaviour
 
     public int leftSideValue;
     public int rightSideValue;
-
-
-    public string texto;
     
+    [SerializeField] private Text uiText;
+    public float tiempoDeVida = 2;
 
     // Start is called before the first frame update
     void Start()
     {
         StartGame();
-        CartelReference.SetActive(false);
     }
 
     // Update is called once per frame
@@ -282,14 +280,21 @@ public class GameManager : MonoBehaviour
         {
             player1.GetComponent<Player>().isMyTurn = false;
             player2.GetComponent<Player>().isMyTurn = true;
-            if (!HasLegalMovements(player2.GetComponent<Player>())) EndTurn(player2);
+            if (!HasLegalMovements(player2.GetComponent<Player>())){
+                uiText.text ="La IA se pasó";
+                EndTurn(player2);
+            }
             player2.GetComponent<Player>().PlayAutomatic();    //el jugador 2 juega automáticamente
         }
         else
         {
             player1.GetComponent<Player>().isMyTurn = true;
             player2.GetComponent<Player>().isMyTurn = false;
-            if (!HasLegalMovements(player1.GetComponent<Player>())) EndTurn(player1);
+            if (!HasLegalMovements(player1.GetComponent<Player>()))
+            {
+                uiText.text = "El jugador 1 se pasó";
+                EndTurn(player1);
+            }
         }
     }
 
@@ -299,10 +304,8 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.Log(tag + " Ganó la partida");
-            if (CartelReference)
-            {
-                MostrarCartel(tag);  
-            }
+            uiText.text = tag + " Ganó la partida";
+            
         }
             
         
@@ -322,15 +325,6 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    public void MostrarCartel(string s)
-    {
-        texto = s + "Ganó la partida";
-        CartelReference.SetActive(true);
-        /*texto.transform.position = new Vector3(this.gameObject.transform.position.x,
-            this.gameObject.transform.position.y,
-            this.transform.position.z);*/
-    }
-
     public List<Ficha> GetFichasMCTS()
     {
         List<Ficha> ft = new List<Ficha>();
@@ -342,6 +336,17 @@ public class GameManager : MonoBehaviour
         return ft;
     }
 
+    public void showText(String player)
+    {
+         if (player == "player_1")
+            {
+                uiText.text = "La IA se pasó";
+            }
+            else
+            {
+                uiText.text = "El jugador 1 se pasó";
+            }
+    }
     /*public List<Ficha> GetFichasDisponibles()
     {
         List<Ficha> fichas = new List<Ficha>();

@@ -75,12 +75,12 @@ public class Player : MonoBehaviour
         Ficha move = mc.Mcts(gManager);
         
         //GameObject move2 = MasAcompañada();
-        if (move == null)
+        /*if (move == null)
         {
             gManager.EndTurn(this.gameObject);
         }
-        else
-        {
+        else*/
+        
             GameObject aux = new GameObject();
             foreach (GameObject ficha in hand)
             {
@@ -96,8 +96,8 @@ public class Player : MonoBehaviour
                 if (hand.Count == 0) gManager.Win(tag);
                 else gManager.EndTurn(this.gameObject);
             }
-        }
-        Debug.Log(JsonUtility.ToJson(move.GetComponent<Ficha>()));
+        
+        //Debug.Log(JsonUtility.ToJson(move.GetComponent<Ficha>()));
         
     }
 

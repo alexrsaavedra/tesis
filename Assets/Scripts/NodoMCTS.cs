@@ -19,6 +19,7 @@ public class NodoMCTS
     public Player oponente;
     public int wins;
     public bool visited = false;
+    public int timesExpanded;
 
     /*public double GetResult()  
     {
@@ -53,10 +54,10 @@ public class NodoMCTS
         return a;
     }*/
 
-    public NodoMCTS getRandomChild()
+    public NodoMCTS getRandomChild(NodoMCTS node)
     {
-        var index = Random.Range(0, children.Count - 1);
-        return children[index];
+        var index = Random.Range(0, node.children.Count - 1);
+        return node.children[index];
     }
 
     // Start is called before the first frame update
