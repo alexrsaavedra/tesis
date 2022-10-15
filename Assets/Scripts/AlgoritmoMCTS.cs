@@ -38,7 +38,8 @@ public class AlgoritmoMcts
             hand = root.hand,
             backUpSelectedToken = x,
             leftSideValue = root.leftSideValue,
-            rightSideValue = root.rightSideValue
+            rightSideValue = root.rightSideValue,
+            children = new List<NodoMCTS>()
         }).ToList();
 
         if (root.children.Count == 1) return root.children[0].selectedToken;
@@ -86,7 +87,7 @@ public class AlgoritmoMcts
         // realice la búsqueda
         // las propiedades timesExpanded y visited del nodo no creo que
         // sean necesarias
-        RunMCTS(root, gameManager, 2);
+        RunMCTS(root, gameManager, 10, root);
 
         var visits = 0;
         Ficha move = new Ficha();
@@ -104,34 +105,29 @@ public class AlgoritmoMcts
         //return Selection(root).selectedToken;
     }
 
-    public void RunMCTS(NodoMCTS node, GameManager gameManager, int counter)
+    public void RunMCTS(NodoMCTS node, GameManager gameManager, int counter, NodoMCTS root)
     {
         if (counter == 0) return;
 
-        // Corro el algoritmo siempre que el nodo actual tenga hijos
-        // Compruebo que los hijos no sean nulos por si acaso
-        if (node.children != null && node.children.Count > 0)
-        {
-            //Selection
-            NodoMCTS current = Selection(node);
+        //Selection
+        NodoMCTS current = Selection(root);
 
-            // Expasion
-            Expansion(current, gameManager);
+        // Expasion
+        Expansion(current, gameManager);
 
-            // Simulation
-            int simValue = Simulacion(current, gameManager);
+        // Simulation
+        int simValue = Simulacion(current, gameManager);
 
-            //Backpropagation
-            Backpropagation(current, simValue);
+        //Backpropagation
+        Backpropagation(current, simValue);
 
-            counter--;
+        counter--;
 
-            // Hacer lo mismo para cada uno de los hijos del nodo, si los tubiera
-            // segun sea la profundidad designada
-            current.children.ForEach(x => RunMCTS(x, gameManager, counter));
-        }
-        else return;
+        // Hacer lo mismo para cada uno de los hijos del nodo, si los tubiera
+        // segun sea la profundidad designada
+        current.children.ForEach(x => RunMCTS(x, gameManager, counter, root));
 
+        return;
     }
 
     public List<Ficha> jugadasLegales(int leftSideValue, int rightSideValue, List<Ficha> tokenDisponibles)
@@ -168,7 +164,7 @@ public class AlgoritmoMcts
             double exploración = item.timesVisited > 0
                 ? Math.Sqrt(Math.Log(item.parent.timesVisited) / item.timesVisited)
                 : 0;
-
+            
             double valorAux = tasaExito + exploración;
 
             if (valorAux >= valorUCT)
@@ -195,9 +191,13 @@ public class AlgoritmoMcts
             return null;*/
         }
 
-        resultado.timesVisited++;
+        //resultado.timesVisited++;
         resultado.visited = true;
 
+        if (resultado.children.Any())
+        {
+            resultado = Selection(resultado);
+        }
         return resultado;
 
         // Aqí hay una posibilidad de devolver un nodo inicializado, pero si ningún
@@ -432,7 +432,8 @@ public class AlgoritmoMcts
                 hand = nodoMcts.hand,
                 backUpSelectedToken = x,
                 leftSideValue = nodoMcts.leftSideValue,
-                rightSideValue = nodoMcts.rightSideValue
+                rightSideValue = nodoMcts.rightSideValue,
+                children = new List<NodoMCTS>()
             };
 
             PlaceTokenAux(nn, x);
