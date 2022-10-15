@@ -101,12 +101,13 @@ public class GameManager : MonoBehaviour
             tokenDeck.Remove(token);
             player1.GetComponent<Player>().ReceiveToken(token);
             
-            //En este paso añado a una lista las fichas q no son de la IA, con las cuales ella va a simular partidas aleatorias
+            /*//En este paso añado a una lista las fichas q no son de la IA, con las cuales ella va a simular partidas aleatorias
             Ficha ficha = new Ficha();
             ficha.leftValue = token.GetComponent<Ficha>().leftValue;
             ficha.rightValue = token.GetComponent<Ficha>().rightValue;
             salvaToken.Add(ficha);
-            Debug.Log(JsonUtility.ToJson(ficha));
+            //Debug.Log(JsonUtility.ToJson(ficha));
+            */
             
             index = new Random().Next(0,tokenDeck.Count -1);
             token = tokenDeck[index];
