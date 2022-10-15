@@ -250,8 +250,8 @@ public class AlgoritmoMcts
     public int Simulacion(NodoMCTS nodoPrometedor, GameManager gameManager)
     {
         NodoMCTS simulationNode = new NodoMCTS();
-        simulationNode.fieldTokens = nodoPrometedor.fieldTokens;
-        simulationNode.hand = nodoPrometedor.hand;
+        simulationNode.fieldTokens = new List<Ficha>(nodoPrometedor.fieldTokens);
+        simulationNode.hand = new List<Ficha>(nodoPrometedor.hand);
         simulationNode.leftSideValue = nodoPrometedor.leftSideValue;
         simulationNode.rightSideValue = nodoPrometedor.rightSideValue;
 
@@ -589,7 +589,7 @@ public class AlgoritmoMcts
     {
         // Aqui hay un problema, estás asignando una referencia
         // Lo que significa que al final todos los nodos son el mismo
-        // nodo, lo que significa que si cambias algo en uno, se cambia 
+        // nodo, por lo que si cambias algo en uno, se cambia 
         // en los demás
         // NodoMCTS tempNode = nodoMcts;
 
