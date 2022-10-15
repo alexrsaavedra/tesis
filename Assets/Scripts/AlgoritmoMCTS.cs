@@ -255,25 +255,20 @@ public class AlgoritmoMcts
         simulationNode.leftSideValue = nodoPrometedor.leftSideValue;
         simulationNode.rightSideValue = nodoPrometedor.rightSideValue;
 
-
-        int fichasOponente = gameManager.player1.GetComponent<Player>().hand.Count;
+        // Menos uno debido a que durante la expasión agregamos una jugada
+        // del jugador humano
+        int fichasOponente = gameManager.player1.GetComponent<Player>().hand.Count -1;
         //int fichasoposite = 20 - (nodoPrometedor.hand.Count + nodoPrometedor.fieldTokens.Count);
 
         // Estos son todos los tokens que no tenga la IA en su poder, 
         // O sea los que sobraron al repartir y los que debe tener el jugador,
         // porque realmente la IA no conoce cuales puedan ser las fichas que 
         // actualmente posee el jugador
-        List<Ficha> tokenDisponibles = new List<Ficha>();
-        foreach (var ficha in gameManager.salvaToken)
-        {
-            tokenDisponibles.Add(ficha);
-        }
-
-        // Agregar a los token disponibles las fichas que tiene el jugador en mano
-        foreach (var ficha in gameManager.player1.GetComponent<Player>().hand)
-        {
-            tokenDisponibles.Add(ficha.GetComponent<Ficha>());
-        }
+        List<Ficha> tokenDisponibles = GetAvailableTokensForHuman(gameManager.salvaToken,
+        gameManager.player1.GetComponent<Player>().hand
+        .Select<GameObject, Ficha>(x => x.GetComponent<Ficha>())
+        .ToList(),
+        simulationNode.fieldTokens);
 
         //int fichasIA = nodoPrometedor.hand.Count;
         int fichasIA = simulationNode.hand.Count;
