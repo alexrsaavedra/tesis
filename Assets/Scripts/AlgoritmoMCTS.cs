@@ -109,7 +109,8 @@ public class AlgoritmoMcts
         if (counter == 0) return;
 
         // Corro el algoritmo siempre que el nodo actual tenga hijos
-        if (node.children.Count > 0)
+        // Compruebo que los hijos no sean nulos por si acaso
+        if (node.children != null && node.children.Count > 0)
         {
             //Selection
             NodoMCTS current = Selection(node);
@@ -255,9 +256,7 @@ public class AlgoritmoMcts
         simulationNode.leftSideValue = nodoPrometedor.leftSideValue;
         simulationNode.rightSideValue = nodoPrometedor.rightSideValue;
 
-        // Menos uno debido a que durante la expasión agregamos una jugada
-        // del jugador humano
-        int fichasOponente = gameManager.player1.GetComponent<Player>().hand.Count -1;
+        int fichasOponente = gameManager.player1.GetComponent<Player>().hand.Count;
         //int fichasoposite = 20 - (nodoPrometedor.hand.Count + nodoPrometedor.fieldTokens.Count);
 
         // Estos son todos los tokens que no tenga la IA en su poder, 
@@ -277,32 +276,6 @@ public class AlgoritmoMcts
 
         while (fichasOponente > 0 && fichasIA > 0)
         {
-            List<Ficha> legalPlaysIA = jugadasLegales(
-                simulationNode.leftSideValue,
-                simulationNode.rightSideValue,
-                tokensIA);
-
-            if (legalPlaysIA.Any())
-            {
-                //var index = Random.Range(0, legalPlaysIA.Count - 1);
-                var index = SelectorEstrategia(legalPlaysIA);
-                simulationNode.selectedToken = legalPlaysIA[index];
-                //tokensIA.Remove(legalPlaysIA[index]);
-
-                PlaceTokenAux(simulationNode, legalPlaysIA[index]);
-
-                // Es necesario eliminar la ficha luego de colocarla
-                tokensIA = tokensIA.Where(x =>
-                x.rightValue != simulationNode.selectedToken.rightValue &&
-                x.leftValue != simulationNode.selectedToken.leftValue).ToList();
-
-                fichasIA--;
-                //if (tokensIA.Count == 0)
-                if (fichasIA == 0)
-                {
-                    return 1; // gana la IA
-                }
-            }
 
             // Ya tenias un metodo de obtención de jugadas legales, creo que es mejor usarlo
             // List<Ficha> legalPlays = jugadasLegalesTest(simulationNode, tokenDisponibles);
@@ -327,6 +300,33 @@ public class AlgoritmoMcts
                 if (fichasOponente == 0)
                 {
                     return -1; //gana humano
+                }
+            }
+
+            List<Ficha> legalPlaysIA = jugadasLegales(
+                simulationNode.leftSideValue,
+                simulationNode.rightSideValue,
+                tokensIA);
+
+            if (legalPlaysIA.Any())
+            {
+                //var index = Random.Range(0, legalPlaysIA.Count - 1);
+                var index = SelectorEstrategia(legalPlaysIA);
+                simulationNode.selectedToken = legalPlaysIA[index];
+                //tokensIA.Remove(legalPlaysIA[index]);
+
+                PlaceTokenAux(simulationNode, legalPlaysIA[index]);
+
+                // Es necesario eliminar la ficha luego de colocarla
+                tokensIA = tokensIA.Where(x =>
+                x.rightValue != simulationNode.selectedToken.rightValue &&
+                x.leftValue != simulationNode.selectedToken.leftValue).ToList();
+
+                fichasIA--;
+                //if (tokensIA.Count == 0)
+                if (fichasIA == 0)
+                {
+                    return 1; // gana la IA
                 }
             }
 
